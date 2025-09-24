@@ -3,7 +3,7 @@ setlocal
 cls
 
 echo ============================================================
-echo            ACHM PROCESSOR - PORTABLE BUILDER
+echo            ACHM PROCESSOR - PORTABLE BUILDER V2
 echo            No Python Installation Required!
 echo ============================================================
 echo.
@@ -25,6 +25,7 @@ echo [2/4] Preparing build environment...
 echo.
 echo [3/4] Building ACHM_batch_processor.exe...
 echo      This may take 3-5 minutes...
+echo      Note: UPX disabled for antivirus compatibility
 echo.
 
 python_embed\python.exe -m PyInstaller achm_build.spec

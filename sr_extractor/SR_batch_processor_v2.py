@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """
-Portable version of SR Batch Processor
-Modified for PyInstaller compatibility
+SR Batch Processor - Version 2 (Lean)
+Processes summaryReport files from accounts/ directories
+Assumes directory structure exists
+
+Version 2 improvements:
+- LEAN: Assumes directory structure exists
+- Keeps safety check for existing output files
+- Cleaner, shorter code
 """
 
 import os
@@ -23,19 +29,15 @@ logging.basicConfig(level=logging.WARNING)
 def get_base_path():
     """Get base path for frozen or normal execution."""
     if getattr(sys, 'frozen', False):
-        # Running as compiled executable
         return Path(sys._MEIPASS)
     else:
-        # Running as script
         return Path(__file__).parent
 
 def get_working_dir():
     """Get working directory (where exe is located)."""
     if getattr(sys, 'frozen', False):
-        # Get the directory containing the exe
         return Path(sys.executable).parent
     else:
-        # Running as script
         return Path.cwd()
 
 class SRBatchProcessor:
@@ -107,9 +109,7 @@ class SRBatchProcessor:
     def load_extractor(self) -> bool:
         """Dynamically load the SR extractor module."""
         try:
-            # Try to find the extractor script
             if getattr(sys, 'frozen', False):
-                # In frozen app, look in multiple places
                 possible_paths = [
                     self.scripts_dir / "SR_data_extractor.py",
                     get_working_dir() / "scripts" / "SR_data_extractor.py",
@@ -123,7 +123,6 @@ class SRBatchProcessor:
                         break
                 
                 if not extractor_path:
-                    # Try to import directly if it was bundled as a module
                     try:
                         import SR_data_extractor
                         self.extractor_module = SR_data_extractor
@@ -136,7 +135,6 @@ class SRBatchProcessor:
             else:
                 extractor_path = self.scripts_dir / "SR_data_extractor.py"
             
-            # Load from file
             spec = importlib.util.spec_from_file_location(
                 "SR_data_extractor", 
                 str(extractor_path)
@@ -151,43 +149,11 @@ class SRBatchProcessor:
             self.report_lines.append(f"ERROR: Could not load SR extractor: {e}")
             return False
 
-    def validate_directory_structure(self) -> bool:
-        """Validate and create required directory structure."""
-        missing_items = []
-        
-        # For frozen exe, don't check scripts directory
-        if not getattr(sys, 'frozen', False):
-            if not self.scripts_dir.exists():
-                missing_items.append("scripts/")
-            elif not (self.scripts_dir / "SR_data_extractor.py").exists():
-                missing_items.append("scripts/SR_data_extractor.py")
-        
-        if not self.accounts_dir.exists():
-            # Create accounts directory if it doesn't exist
-            self.accounts_dir.mkdir(parents=True, exist_ok=True)
-            print("Created directory: accounts/")
-            print("  Place customer folders with HTML files here")
-        
-        # Create output directory if it doesn't exist
-        if not self.output_dir.exists():
-            self.output_dir.mkdir(parents=True, exist_ok=True)
-            print("Created directory: _output_files/")
-        
-        # Create SR output directory for today
+    def validate_existing_output(self) -> bool:
+        """Check for existing output files and handle appropriately."""
+        # Ensure output directory exists for files
         if not self.sr_output_dir.exists():
             self.sr_output_dir.mkdir(parents=True, exist_ok=True)
-            print(f"Created directory: _output_files/{self.sr_output_dir.name}/")
-        
-        # Create processed_files directory if it doesn't exist
-        if not self.processed_base_dir.exists():
-            self.processed_base_dir.mkdir(parents=True, exist_ok=True)
-            print("Created directory: processed_files/")
-        
-        if missing_items:
-            error_msg = f"ERROR: Missing required items: {', '.join(missing_items)}"
-            print(error_msg)
-            self.report_lines.append(error_msg)
-            return False
         
         # Check if consolidated files already exist
         files_exist = []
@@ -475,7 +441,7 @@ class SRBatchProcessor:
 
     def run(self) -> int:
         """Main execution method."""
-        print("SR Batch Processor (Portable Edition)")
+        print("SR Batch Processor - Version 2 (Lean)")
         print("=" * 60)
         print(f"Processing date: {self.process_date}")
         print(f"Working directory: {self.portable_dir}")
@@ -491,8 +457,8 @@ class SRBatchProcessor:
             input()
             return 1
         
-        # Validate directory structure
-        if not self.validate_directory_structure():
+        # Check for existing output files
+        if not self.validate_existing_output():
             print("\nPress Enter to exit...")
             input()
             return 1
@@ -501,9 +467,13 @@ class SRBatchProcessor:
         customer_dirs = self.find_customer_directories()
         
         if not customer_dirs:
-            print("\nNo customer directories found in accounts/")
-            print("Please create subdirectories in accounts/ with HTML files to process")
-            print("Example: accounts/Customer1/")
+            print("\nERROR: No customer directories found in accounts/")
+            print("Expected directory structure:")
+            print("  accounts/")
+            print("    Customer1/")
+            print("      [summaryReport HTML files]")
+            print("    Customer2/")
+            print("      [summaryReport HTML files]")
             self.report_lines.append("ERROR: No customer directories found")
             print("\nPress Enter to exit...")
             input()

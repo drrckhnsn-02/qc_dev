@@ -1,5 +1,6 @@
-# ACHM PyInstaller spec file
+# ACHM PyInstaller spec file - Version 2
 # Run: pyinstaller achm_build.spec
+# Changes: Disabled UPX compression to avoid antivirus issues
 
 import os
 from PyInstaller.utils.hooks import collect_dynamic_libs, collect_data_files
@@ -11,7 +12,7 @@ h5py_binaries = collect_dynamic_libs('h5py')
 numpy_binaries = collect_dynamic_libs('numpy')
 
 a = Analysis(
-    ['achm_batch_processor_portable.py'],
+    ['achm_batch_processor_portable_v2.py'],
     pathex=['.'],
     binaries=h5py_binaries + numpy_binaries,
     datas=[
@@ -30,6 +31,7 @@ a = Analysis(
         'pandas',
         'scipy',
         'scipy.spatial.transform._rotation_groups',
+        'achm_extractor_v2',  # Add as hidden import to ensure it's bundled as module
     ],
     hookspath=[],
     runtime_hooks=[],
@@ -57,7 +59,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,  # CHANGED: Disabled UPX to avoid antivirus issues
     upx_exclude=[],
     runtime_tmpdir=None,
     console=True,

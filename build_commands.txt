@@ -1,0 +1,1 @@
+pyinstaller .\sr_extractor\simple_build.spec --distpath .\build_sr\ --workpath .\build_sr\build

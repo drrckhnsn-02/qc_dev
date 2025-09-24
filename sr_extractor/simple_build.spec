@@ -1,11 +1,12 @@
 # Simple spec file - bundles everything into ONE file
 # Put SR_data_extractor.py in same folder as this spec
 # Run: pyinstaller simple_build.spec
+# Version 2: Disabled UPX to avoid antivirus issues
 
 block_cipher = None
 
 a = Analysis(
-    ['SR_batch_processor.py'],
+    ['SR_batch_processor_v2.py'],
     pathex=['.'],  # Add current directory to path
     binaries=[],
     datas=[
@@ -44,7 +45,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,  # CHANGED: Disabled UPX to avoid antivirus issues
     upx_exclude=[],
     runtime_tmpdir=None,
     console=True,
